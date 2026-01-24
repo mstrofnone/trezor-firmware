@@ -1621,6 +1621,11 @@ pub enum TranslatedString {
     n4w1__err_empty = 1223,  // {"Bolt": "", "Caesar": "", "Delizia": "", "Eckhart": "This tag is empty. Continue to scan a different tag."}
     n4w1__err_nonempty = 1224,  // {"Bolt": "", "Caesar": "", "Delizia": "", "Eckhart": "Non-empty N4W1 tag."}
     n4w1__err_damaged = 1225,  // {"Bolt": "", "Caesar": "", "Delizia": "", "Eckhart": "This tag is damaged. Continue to try again or scan the next tag."}
+    #[cfg(feature = "universal_fw")]
+    ripple__account_deletion_warning = 1226,  // "Delete Ripple account?"
+    #[cfg(feature = "universal_fw")]
+    ripple__account_to_be_deleted = 1227,  // "To be deleted:"
+    words__account_deletion = 1228,  // "Account deletion"
 }
 
 impl TranslatedString {
@@ -2854,6 +2859,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", feature = "universal_fw"))]
@@ -4085,6 +4093,9 @@ impl TranslatedString {
                 20260,
                 20260,
                 20260,
+                20282,
+                20296,
+                20312,
             ];
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -5315,6 +5326,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -6546,6 +6560,9 @@ impl TranslatedString {
                 20260,
                 20260,
                 20260,
+                20282,
+                20296,
+                20312,
             ];
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -7776,6 +7793,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -9007,6 +9027,9 @@ impl TranslatedString {
                 20260,
                 20260,
                 20260,
+                20282,
+                20296,
+                20312,
             ];
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -10237,6 +10260,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -11468,6 +11494,9 @@ impl TranslatedString {
                 20260,
                 20260,
                 20260,
+                20282,
+                20296,
+                20312,
             ];
 
         } else if #[cfg(feature = "layout_caesar")] {
@@ -12699,6 +12728,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", feature = "universal_fw"))]
@@ -13930,6 +13962,9 @@ impl TranslatedString {
                 18285,
                 18285,
                 18285,
+                18307,
+                18321,
+                18337,
             ];
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -15160,6 +15195,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -16391,6 +16429,9 @@ impl TranslatedString {
                 18285,
                 18285,
                 18285,
+                18307,
+                18321,
+                18337,
             ];
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -17621,6 +17662,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -18852,6 +18896,9 @@ impl TranslatedString {
                 18285,
                 18285,
                 18285,
+                18307,
+                18321,
+                18337,
             ];
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -20082,6 +20129,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -21313,6 +21363,9 @@ impl TranslatedString {
                 18285,
                 18285,
                 18285,
+                18307,
+                18321,
+                18337,
             ];
 
         } else if #[cfg(feature = "layout_delizia")] {
@@ -22544,6 +22597,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", feature = "universal_fw"))]
@@ -23775,6 +23831,9 @@ impl TranslatedString {
                 19506,
                 19506,
                 19506,
+                19528,
+                19542,
+                19558,
             ];
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -25005,6 +25064,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -26236,6 +26298,9 @@ impl TranslatedString {
                 19506,
                 19506,
                 19506,
+                19528,
+                19542,
+                19558,
             ];
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -27466,6 +27531,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -28697,6 +28765,9 @@ impl TranslatedString {
                 19506,
                 19506,
                 19506,
+                19528,
+                19542,
+                19558,
             ];
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -29927,6 +29998,9 @@ impl TranslatedString {
                 "",
                 "",
                 "",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -31158,6 +31232,9 @@ impl TranslatedString {
                 19506,
                 19506,
                 19506,
+                19528,
+                19542,
+                19558,
             ];
 
         } else if #[cfg(feature = "layout_eckhart")] {
@@ -32389,6 +32466,9 @@ impl TranslatedString {
                 "This tag is empty. Continue to scan a different tag.",
                 "Non-empty N4W1 tag.",
                 "This tag is damaged. Continue to try again or scan the next tag.",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", feature = "universal_fw"))]
@@ -33620,6 +33700,9 @@ impl TranslatedString {
                 20748,
                 20767,
                 20831,
+                20853,
+                20867,
+                20883,
             ];
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -34850,6 +34933,9 @@ impl TranslatedString {
                 "This tag is empty. Continue to scan a different tag.",
                 "Non-empty N4W1 tag.",
                 "This tag is damaged. Continue to try again or scan the next tag.",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(feature = "debug", not(feature = "universal_fw")))]
@@ -36081,6 +36167,9 @@ impl TranslatedString {
                 20748,
                 20767,
                 20831,
+                20853,
+                20867,
+                20883,
             ];
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -37311,6 +37400,9 @@ impl TranslatedString {
                 "This tag is empty. Continue to scan a different tag.",
                 "Non-empty N4W1 tag.",
                 "This tag is damaged. Continue to try again or scan the next tag.",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), feature = "universal_fw"))]
@@ -38542,6 +38634,9 @@ impl TranslatedString {
                 20748,
                 20767,
                 20831,
+                20853,
+                20867,
+                20883,
             ];
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -39772,6 +39867,9 @@ impl TranslatedString {
                 "This tag is empty. Continue to scan a different tag.",
                 "Non-empty N4W1 tag.",
                 "This tag is damaged. Continue to try again or scan the next tag.",
+                "Delete Ripple account?",
+                "To be deleted:",
+                "Account deletion",
             );
 
             #[cfg(all(not(feature = "debug"), not(feature = "universal_fw")))]
@@ -41003,6 +41101,9 @@ impl TranslatedString {
                 20748,
                 20767,
                 20831,
+                20853,
+                20867,
+                20883,
             ];
 
         }
@@ -42146,6 +42247,10 @@ impl TranslatedString {
         (Qstr::MP_QSTR_reset__you_need_one_share, Self::reset__you_need_one_share),
         (Qstr::MP_QSTR_reset__your_backup_is_done, Self::reset__your_backup_is_done),
         #[cfg(feature = "universal_fw")]
+        (Qstr::MP_QSTR_ripple__account_deletion_warning, Self::ripple__account_deletion_warning),
+        #[cfg(feature = "universal_fw")]
+        (Qstr::MP_QSTR_ripple__account_to_be_deleted, Self::ripple__account_to_be_deleted),
+        #[cfg(feature = "universal_fw")]
         (Qstr::MP_QSTR_ripple__confirm_tag, Self::ripple__confirm_tag),
         #[cfg(feature = "universal_fw")]
         (Qstr::MP_QSTR_ripple__destination_tag_missing, Self::ripple__destination_tag_missing),
@@ -42529,6 +42634,7 @@ impl TranslatedString {
         (Qstr::MP_QSTR_words__about, Self::words__about),
         (Qstr::MP_QSTR_words__account, Self::words__account),
         (Qstr::MP_QSTR_words__account_colon, Self::words__account_colon),
+        (Qstr::MP_QSTR_words__account_deletion, Self::words__account_deletion),
         (Qstr::MP_QSTR_words__address, Self::words__address),
         (Qstr::MP_QSTR_words__amount, Self::words__amount),
         (Qstr::MP_QSTR_words__are_you_sure, Self::words__are_you_sure),
