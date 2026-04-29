@@ -34,3 +34,5 @@ uses = [
     "touch_wakeup",
     "tropic",
 ]
+
+elf_sections = [".flash", ".data"]
