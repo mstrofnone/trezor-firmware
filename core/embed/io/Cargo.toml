@@ -12,6 +12,7 @@ xbuild.workspace = true
 [dependencies]
 sec.workspace = true
 sys.workspace = true
+models.workspace = true
 
 [features]
 
@@ -68,7 +69,7 @@ usb_iface_wire = ["usb"]
 
 test = [
     "mcu_stm32u5g",
-    "model_t3w1",
+    "models/model_t3w1",
     "emulator",
     "kernel_mode",
     "secure_mode",
