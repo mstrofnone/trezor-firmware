@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef USE_NFC
+#define USE_NFC
+#endif
 #ifdef USE_NFC
 
 #include <trezor_rtl.h>
@@ -31,6 +34,14 @@ static nfc_dev_info_t dev_info = {0};
 
 static const uint8_t aid_select_ndef_app[7] = {0xd2, 0x76, 0x00, 0x00,
                                                0x85, 0x01, 0x01};
+// static const uint8_t aid_select_cc_file[7] = {0x00, 0xa4, 0x00, 0x0c,
+//                                               0x02, 0xe1, 0x03};
+// static const uint8_t aid_read_cc_file[5] = {0x00, 0xb0, 0x00, 0x00, 0x00};
+// static const uint8_t aid_select_ndef_file[7] = {0x00, 0xa4, 0x00, 0x0c,
+//                                                 0x02, 0xe1, 0x04};
+// static const uint8_t aid_read_ndef_file_len[5] = {0x00, 0xb0, 0x00, 0x00,
+// 0x02}; static const uint8_t aid_read_ndef_file[5] = {0x00, 0xb0, 0x00, 0x02,
+// 0x0e};
 
 static void prodtest_nfc_read_card(cli_t* cli) {
   uint32_t timeout = 0;

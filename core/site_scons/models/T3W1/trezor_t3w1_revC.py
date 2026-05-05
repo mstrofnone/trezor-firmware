@@ -192,6 +192,7 @@ def configure(
         sources += ["embed/io/nfc/st25/rfal002/source/rfal_st25tb.c"]
         sources += ["embed/io/nfc/st25/rfal002/source/rfal_t1t.c"]
         sources += ["embed/io/nfc/st25/rfal002/source/rfal_t2t.c"]
+        sources += ["embed/io/nfc/st25/rfal002/source/rfal_t4t.c"]
         sources += ["embed/io/nfc/st25/rfal002/source/rfal_iso15693_2.c"]
         sources += ["embed/io/nfc/st25/rfal002/source/rfal_crc.c"]
         sources += ["embed/io/nfc/st25/rfal002/source/st25r3916/st25r3916.c"]
