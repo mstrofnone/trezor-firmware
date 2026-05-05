@@ -24,8 +24,13 @@
 #include <io/nfc.h>
 #include <rtl/cli.h>
 #include <sys/systick.h>
+#include "rfal_nfc.h"
+#include "rfal_t4t.h"
 
 static nfc_dev_info_t dev_info = {0};
+
+static const uint8_t aid_select_ndef_app[7] = {0xd2, 0x76, 0x00, 0x00,
+                                               0x85, 0x01, 0x01};
 
 static void prodtest_nfc_read_card(cli_t* cli) {
   uint32_t timeout = 0;
@@ -121,6 +126,30 @@ static void prodtest_nfc_read_card(cli_t* cli) {
         nfc_dev_deactivate();
         cli_trace(cli, "NFC reader mode over");
         break;
+      }
+
+      systick_delay_ms(100);
+      nfc_dev_deactivate();
+    } else if (nfc_event == NFC_EVENT_DEACTIVATED) {
+      cli_trace(cli, "NFC card removed.");
+    } else if (nfc_event == NFC_EVENT_ACTIVATED_NFCA_T4T) {
+      cli_trace(cli, "NFC Type A T4T tag activated: UID: %s", dev_info.uid);
+
+      rfalIsoDepApduBufFormat apdu_buffer;
+      uint16_t apdu_buffer_len;
+      ReturnCode ret_code = rfalT4TPollerComposeSelectAppl(
+          &apdu_buffer, &aid_select_ndef_app[0], sizeof(aid_select_ndef_app),
+          &apdu_buffer_len);
+
+      if (ret_code == RFAL_ERR_NONE) {
+        uint8_t* apdu_resp = NULL;
+        uint16_t* apdu_resp_len = NULL;
+        nfc_status =
+            nfc_transceive((const uint8_t*)&apdu_buffer.apdu, apdu_buffer_len,
+                           &apdu_resp, &apdu_resp_len);
+
+        cli_trace(cli, "nfc_transceive: stat=%d / 0x%02X 0x%02X, len=%d",
+                  nfc_status, apdu_resp[0], apdu_resp[1], *apdu_resp_len);
       }
 
       systick_delay_ms(100);
@@ -285,6 +314,95 @@ cleanup:
   nfc_deinit();
 }
 
+static void prodtest_nfc_send_apdu_cmd(cli_t* cli) {
+  uint32_t timeout = 0;
+  bool timeout_set = false;
+  memset(&dev_info, 0, sizeof(dev_info));
+
+  if (cli_has_arg(cli, "timeout")) {
+    if (!cli_arg_uint32(cli, "timeout", &timeout)) {
+      cli_error_arg(cli, "Expecting timeout argument.");
+      return;
+    }
+    timeout_set = true;
+  }
+
+  if (cli_arg_count(cli) > 1) {
+    cli_error_arg_count(cli);
+    return;
+  }
+
+  nfc_status_t ret = nfc_init();
+
+  if (ret != NFC_OK) {
+    cli_error(cli, CLI_ERROR_FATAL, "NFC init failed");
+    goto cleanup;
+  } else {
+    if (timeout_set) {
+      cli_trace(cli,
+                "NFC reader on, put the card on the reader (timeout %d ms)",
+                timeout);
+    } else {
+      cli_trace(cli, "NFC reader on, put the card on the reader");
+    }
+  }
+
+  nfc_register_tech(NFC_POLLER_TECH_A | NFC_POLLER_TECH_B | NFC_POLLER_TECH_F |
+                    NFC_POLLER_TECH_V);
+  nfc_activate_stm();
+
+  nfc_event_t nfc_event;
+  uint32_t expire_time = ticks_timeout(timeout);
+
+  while (true) {
+    if (timeout_set && ticks_expired(expire_time)) {
+      cli_error(cli, CLI_ERROR_TIMEOUT, "NFC timeout");
+      goto cleanup;
+    }
+
+    nfc_status_t nfc_status = nfc_get_event(&nfc_event);
+
+    if (nfc_status != NFC_OK) {
+      cli_error(cli, CLI_ERROR_FATAL, "NFC error");
+      goto cleanup;
+    }
+
+    if (nfc_event == NFC_EVENT_ACTIVATED) {
+      nfc_dev_read_info(&dev_info);
+
+      if (dev_info.type != NFC_DEV_TYPE_A) {
+        cli_error(cli, CLI_ERROR_ABORT, "Only NFC type A cards supported");
+        goto cleanup;
+      }
+
+      cli_trace(cli, "NFC tag %s", dev_info.uid);
+
+      // cli_trace(cli, "Writing URI to NFC tag %s", dev_info.uid);
+      nfc_dev_write_ndef_uri();
+
+      if (timeout_set) {
+        nfc_dev_deactivate();
+        cli_trace(cli, "NFC reader mode over");
+        break;
+      }
+
+      systick_delay_ms(100);
+      nfc_dev_deactivate();
+    }
+
+    if (cli_aborted(cli)) {
+      goto cleanup;
+    }
+
+    systick_delay_ms(1);
+  }
+
+  cli_ok(cli, "");
+
+cleanup:
+  nfc_deinit();
+}
+
 // clang-format off
 
 PRODTEST_CLI_CMD(
@@ -305,6 +423,13 @@ PRODTEST_CLI_CMD(
   .name = "nfc-write-card",
   .func = prodtest_nfc_write_card,
   .info = "Activate NFC in reader mode and write a URI to the attached card",
+  .args = "[<timeout>]"
+);
+
+PRODTEST_CLI_CMD(
+  .name = "nfc-send_apdu",
+  .func = prodtest_nfc_send_apdu_cmd,
+  .info = "Send testing APDU commands over NFC to discovered device",
   .args = "[<timeout>]"
 );
 

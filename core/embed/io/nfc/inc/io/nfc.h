@@ -47,11 +47,14 @@ typedef enum {
   NFC_NO_EVENT,
   NFC_EVENT_DEACTIVATED,
   NFC_EVENT_ACTIVATED,
+  NFC_EVENT_ACTIVATED_NFCA_T4T,
 } nfc_event_t;
 
 typedef enum {
   NFC_OK,
   NFC_ERROR,
+  NFC_WRONG_STATE,
+  NFC_PARAM,
   NFC_NOT_INITIALIZED,
   NFC_SPI_BUS_ERROR,
   NFC_INITIALIZATION_FAILED,
@@ -97,3 +100,6 @@ nfc_status_t nfc_dev_read_info(nfc_dev_info_t *dev_info);
 
 // Write the NDEF message with the trezor.io URI to the activated NFC device.
 nfc_status_t nfc_dev_write_ndef_uri(void);
+
+nfc_status_t nfc_transceive(const uint8_t *tx_data, uint16_t tx_data_len,
+                            uint8_t **rx_data, uint16_t **rx_data_len);
