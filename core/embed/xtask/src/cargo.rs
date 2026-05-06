@@ -91,7 +91,7 @@ pub fn fmt() -> Result<()> {
 fn build_impl(args: BuildArgs, is_dependency: bool) -> Result<()> {
     if !args.emulator {
         // Recursively build dependencies (Firmware -> Kernel -> Secmon)
-        if let Some(dependency) = args.component.dependency(args.model) {
+        if let Some(dependency) = args.component.dependency(args.model)? {
             build_impl(
                 BuildArgs {
                     component: dependency,

@@ -82,16 +82,14 @@ impl Component {
 
     /// Returns the next component in the dependency chain,
     /// (e.g. Firmware -> Kernel -> Secmon)
-    pub fn dependency(self, model: Model) -> Option<Component> {
+    pub fn dependency(self, model: Model) -> Result<Option<Component>> {
         match self {
-            Component::Firmware => Some(Component::Kernel),
+            Component::Firmware => Ok(Some(Component::Kernel)),
             Component::Kernel => {
-                let has_secmon = config::ModelConfig::load(model.model_id())
-                    .map(|c| c.secmon)
-                    .unwrap_or(false);
-                if has_secmon { Some(Component::Secmon) } else { None }
+                let has_secmon = config::ModelConfig::load(model.model_id())?.secmon;
+                Ok(if has_secmon { Some(Component::Secmon) } else { None })
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 

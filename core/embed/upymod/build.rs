@@ -289,7 +289,7 @@ fn main() -> Result<()> {
         let scm_revision_xor2 = define_scm_revision(lib)?;
 
         // Build content of genhdr folder
-        let mpy_builder = MpyBuilder::new(lib, scm_revision_xor2);
+        let mpy_builder = MpyBuilder::new(lib, scm_revision_xor2)?;
         let qstr_preprocessed = mpy_builder.build_genhdr()?;
 
         if cfg!(feature = "frozen") && !xbuild::is_rust_analyzer() {
@@ -369,6 +369,7 @@ fn define_scm_revision(lib: &mut CLibrary) -> Result<u8> {
 
 /// Returns all model IDs from the models directory. Sorted for determinism.
 fn py_model_ids(models_dir: &Path) -> Result<Vec<String>> {
+    println!("cargo::rerun-if-changed={}", models_dir.display());
     let mut models = Vec::new();
     for entry in std::fs::read_dir(models_dir).context("Failed to read models directory")? {
         let entry = entry?;
@@ -422,15 +423,18 @@ struct MpyBuilder<'a> {
 }
 
 impl<'a> MpyBuilder<'a> {
-    fn new(lib: &'a CLibrary, scm_revision_xor2: u8) -> Self {
+    fn new(lib: &'a CLibrary, scm_revision_xor2: u8) -> Result<Self> {
         let crate_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
         let mpy_dir = crate_dir.join("../../vendor/micropython");
         let py_src_dir = crate_dir.join("../../src");
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let genhdr_dir = out_dir.join("genhdr");
-        let current_model = env::var("DEP_MODELS_MODEL").unwrap_or_default();
+        let current_model = match env::var("DEP_MODELS_MODEL") {
+            Ok(v) if !v.is_empty() => v,
+            _ => bail!("DEP_MODELS_MODEL env var is missing or empty"),
+        };
 
-        Self {
+        Ok(Self {
             lib,
             crate_dir,
             mpy_dir,
@@ -439,7 +443,7 @@ impl<'a> MpyBuilder<'a> {
             py_src_dir,
             scm_revision_xor2,
             current_model,
-        }
+        })
     }
 
     fn build_genhdr(&self) -> Result<PathBuf> {
