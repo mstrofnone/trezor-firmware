@@ -190,7 +190,16 @@ pub fn configure_cargo(args: &BuildArgs, cmd: &mut process::Command) -> Result<(
         // - https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/emit-stack-sizes.html
         // - https://blog.japaric.io/stack-analysis/
         // - https://github.com/japaric/stack-sizes/
-        cmd.env("RUSTFLAGS", "-Z print-type-sizes -Z emit-stack-sizes");
+        let mut combined = std::env::var("RUSTFLAGS").unwrap_or_default();
+        for flag in ["-Z print-type-sizes", "-Z emit-stack-sizes"] {
+            if !combined.contains(flag) {
+                if !combined.is_empty() {
+                    combined.push(' ');
+                }
+                combined.push_str(flag);
+            }
+        }
+        cmd.env("RUSTFLAGS", combined);
     }
 
     if args.emulator && args.asan {
