@@ -65,7 +65,7 @@ def write_input_script_prefixed(
             write_input_script_p2wpkh_in_p2sh(
                 w, common.ecdsa_hash_pubkey(pubkey, coin), prefixed=True
             )
-    elif script_type in (IST.SPENDWITNESS, IST.SPENDTAPROOT):
+    elif script_type in (IST.SPENDWITNESS, IST.SPENDTAPROOT, IST.SPENDMINISCRIPT):
         # native p2wpkh or p2wsh or p2tr
         script_sig = _input_script_native_segwit()
         write_bytes_prefixed(w, script_sig)
@@ -133,6 +133,12 @@ def write_bip143_script_code_prefixed(
         write_output_script_multisig(w, public_keys, threshold, prefixed=True)
         return
 
+    if txi.miniscript is not None:
+        script = derive_miniscript(txi)
+        write_compact_size(w, len(script))
+        w.extend(script)
+        return
+
     p2pkh = txi.script_type in (
         InputScriptType.SPENDWITNESS,
         InputScriptType.SPENDP2SHWITNESS,
@@ -147,6 +153,22 @@ def write_bip143_script_code_prefixed(
         )
     else:
         raise DataError("Unknown input script type for bip143 script code")
+
+
+def derive_miniscript(txi: TxInput) -> bytes:
+    from trezorminiscript import compile
+
+    if txi.script_type != InputScriptType.SPENDMINISCRIPT:
+        raise DataError("Invalid script type")
+    if txi.miniscript is None:
+        raise DataError("Missing miniscript")
+
+    change, index = txi.address_n[-2:]
+    if change not in (0, 1):
+        raise DataError("Unexpected change value")
+
+    # TODO: only `wsh()` is supported
+    return compile(txi.miniscript, bool(change), index)
 
 
 # P2PKH, P2SH

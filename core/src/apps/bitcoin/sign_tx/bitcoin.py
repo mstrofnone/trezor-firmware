@@ -671,6 +671,9 @@ class Bitcoin:
         else:
             public_key, signature = self.sign_bip143_input(i, txi)
             if self.serialize:
+                assert (txi.miniscript is not None) == (
+                    txi.script_type == InputScriptType.SPENDMINISCRIPT
+                )
                 if txi.multisig:
                     # find out place of our signature based on the pubkey
                     signature_index = multisig.multisig_pubkey_index(
@@ -684,6 +687,10 @@ class Bitcoin:
                         self.get_sighash_type(txi),
                     )
                 else:
+                    if txi.miniscript:
+                        # TODO: not sure if it works for >1 witness items (i.e. Liana recovery path)
+                        public_key = scripts.derive_miniscript(txi)
+
                     scripts.write_witness_p2wpkh(
                         self.serialized_tx,
                         signature,
@@ -944,7 +951,18 @@ class Bitcoin:
         if node is None:
             node = self.keychain.derive(txi.address_n)
 
-        address = addresses.get_address(txi.script_type, self.coin, node, txi.multisig)
+        if txi.miniscript is not None:
+            script = scripts.derive_miniscript(txi)
+
+            assert self.coin.bech32_prefix is not None
+            address = addresses._address_p2wsh(
+                sha256(script).digest(), self.coin.bech32_prefix
+            )
+        else:
+            address = addresses.get_address(
+                txi.script_type, self.coin, node, txi.multisig
+            )
+
         return scripts.output_derive_script(address, self.coin)
 
     def output_derive_script(self, txo: TxOutput) -> AnyBytes:
