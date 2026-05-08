@@ -128,6 +128,7 @@ if utils.USE_THP:
     async def handle_session_thp(*ifaces: WireInterface) -> None:
         ctx = ThpContext(*ifaces)
         if __debug__:
+            _THP_IFACES.clear()
             _THP_IFACES.extend(ctx._iface_ctxs)
 
         try:

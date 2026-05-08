@@ -338,7 +338,7 @@ class InterfaceContext:
                         if __debug__:
                             log.error(
                                 __name__,
-                                "(cid: %0rx) retransmission timeout",
+                                "(cid: %04x) retransmission timeout",
                                 channel_id,
                                 iface=self._iface,
                             )
