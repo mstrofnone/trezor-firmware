@@ -26,11 +26,8 @@ use trezor_thp::{
 use crypto::TrezorCrypto;
 use time::ChannelTiming;
 
-// ~ 236B (contains MAX_DEVICE_PROPERTIES_LEN buffer)
 type TrezorMux = Mux<TrezorCrypto>;
-// ~ 800B
 type TrezorChannelOpen = ChannelOpen<TrezorCredentialVerifier, TrezorCrypto>;
-// ~ 192B
 type TrezorChannel = Channel<TrezorCrypto>;
 
 type PubKey = [u8; PUBKEY_LEN];
@@ -71,7 +68,7 @@ static CHANNEL_ID_COUNTER: Lazy<ChannelIdAllocator> =
 
 /// State of channels and associated data for single communication interface.
 // NOTE: it would be possible for a single struct to hold the state for all
-// interfaces and save a bit of flash spce - there would only have to be
+// interfaces and save a bit of flash space - there would only have to be
 // per-interface mux and the LinearMap keys would then be (u8, u16).
 // Currently around 6KiB with 4/4/8 opening/pairing/appdata.
 struct InterfaceContext {
@@ -784,7 +781,7 @@ impl CredentialVerifier for TrezorCredentialVerifier {
                 log::info!("No credential, skipping verification.");
                 return Ok(PairingState::Unpaired);
             }
-            let mut aux = unwrap!(THP_AUX.try_lock());
+            let mut aux = THP_AUX.try_lock().ok_or(CANNOT_UNLOCK)?;
             let res = self.verify_fn.call_with_n_args(&[
                 self.channel_id.into(),
                 remote_static_pubkey.try_into()?,

@@ -34,7 +34,8 @@ impl ChannelTiming {
     pub fn update_last_write(&mut self, now: Instant, packet: Option<&[u8]>) {
         // Ignore ACK messages and channel allocation responses.
         if packet
-            .and_then(|p| ControlByte::try_from(p[0]).ok())
+            .and_then(|p| p.first())
+            .and_then(|b| ControlByte::try_from(*b).ok())
             .is_some_and(|cb| cb.is_ack() || cb.is_channel_allocation_response())
         {
             return;
