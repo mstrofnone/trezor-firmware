@@ -5,8 +5,7 @@ use crate::{
     alternating_bit::SyncBits,
     channel::{
         HANDSHAKE_BUFFER_DTH_LEN, HANDSHAKE_BUFFER_HTD_LEN, MAX_DEVICE_PROPERTIES_LEN, Nonce,
-        PRIVKEY_LEN, PacketInResult, PairingState, ReceiveState, SendState,
-        noise::NoiseHandshake,
+        PRIVKEY_LEN, PacketInResult, PairingState, ReceiveState, SendState, noise::NoiseHandshake,
     },
     credential::CredentialVerifier,
     error::TransportError,
@@ -195,10 +194,6 @@ where
         };
         if cb.is_codec_v1() {
             return self.handle_v1(packet_buffer);
-        }
-        if !channel_id_valid(channel_id) {
-            log::warn!("Invalid channel id {:04x}.", channel_id);
-            return PacketInResult::ignore(Error::malformed_data());
         }
         if channel_id != BROADCAST_CHANNEL_ID {
             return PacketInResult::route(channel_id, len);

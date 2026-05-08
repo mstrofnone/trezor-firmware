@@ -83,15 +83,25 @@ pub(crate) fn parse_cb_channel(buffer: &[u8]) -> Result<(ControlByte, u16, &[u8]
     Ok((ControlByte::try_from(*cb)?, channel_id, rest))
 }
 
-// For use with PacketInResult::Route. Caller must check that cb is not codec_v1
-// and that channel_id is not broadcast.
+// To be used by `Mux::packet_in` to determine whether to process this packet or route it to unicast channel.
+// - codec_v1 packets are returned with BROADCAST_CHANNEL_ID
+// - others have the channel id validated (can be unicast or broadcast)
+// - only unicast encrypted transport and handshakes have Some length
 pub(crate) fn parse_cb_channel_length(buffer: &[u8]) -> Result<(ControlByte, u16, Option<u16>)> {
     let (cb, channel_id, rest) = parse_cb_channel(buffer)?;
-    if cb.is_continuation() || cb.is_ack() || cb.is_error() {
-        return Ok((cb, channel_id, None));
+    if cb.is_codec_v1() {
+        return Ok((cb, BROADCAST_CHANNEL_ID, None));
     }
-    let (payload_len, _rest) = parse_u16(rest)?;
-    Ok((cb, channel_id, Some(payload_len)))
+    if !channel_id_valid(channel_id) {
+        log::error!("Invalid channel id {:04x}.", channel_id);
+        return Err(Error::malformed_data());
+    }
+    if channel_id != BROADCAST_CHANNEL_ID && (cb.is_encrypted_transport() || cb.is_handshake()) {
+        let (payload_len, _rest) = parse_u16(rest)?;
+        Ok((cb, channel_id, Some(payload_len)))
+    } else {
+        Ok((cb, channel_id, None))
+    }
 }
 
 impl<R: Role> Header<R> {

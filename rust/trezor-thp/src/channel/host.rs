@@ -10,10 +10,7 @@ use crate::{
     },
     credential::CredentialStore,
     fragment::{Fragmenter, Reassembler},
-    header::{
-        BROADCAST_CHANNEL_ID, HandshakeMessage, Header, channel_id_valid, parse_cb_channel_length,
-        parse_u16,
-    },
+    header::{BROADCAST_CHANNEL_ID, HandshakeMessage, Header, parse_cb_channel_length, parse_u16},
     util::prepare_zeroed,
 };
 
@@ -240,10 +237,6 @@ where
             // parse_cb_channel_length already writes to log
             return PacketInResult::ignore(Error::malformed_data());
         };
-        if !channel_id_valid(channel_id) {
-            log::warn!("Invalid channel id {:04x}.", channel_id);
-            return PacketInResult::ignore(Error::malformed_data());
-        }
         if channel_id != BROADCAST_CHANNEL_ID && !cb.is_codec_v1() {
             return PacketInResult::route(channel_id, length);
         }
