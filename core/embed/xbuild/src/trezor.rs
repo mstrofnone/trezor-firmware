@@ -146,11 +146,13 @@ impl CLibrary {
         let this_lib = links_name()?;
 
         if has_feature("emulator") {
-            println!("cargo:rustc-link-lib={this_lib}");
+            println!("cargo:rustc-link-arg=-Wl,--whole-archive");
+            println!("cargo:rustc-link-arg=-l{this_lib}");
 
             for dep in self.get_libs() {
-                println!("cargo:rustc-link-lib={}", dep);
+                println!("cargo:rustc-link-arg=-l{}", dep);
             }
+            println!("cargo:rustc-link-arg=-Wl,--no-whole-archive");
 
             println!("cargo:rustc-link-lib=c");
             println!("cargo:rustc-link-lib=m");
