@@ -265,6 +265,9 @@ test_emu_ui_record_multicore: ## quickly record all screens
 	make test_emu_ui_multicore || echo "All errors are recorded in fixtures.json"
 	../tests/update_fixtures.py local --remove-missing
 
+test_emu_prodtest: ## run prodtest device tests
+	$(PYTEST) $(TESTPATH)/prodtest_tests $(TESTOPTS)
+
 pylint: ## run pylint on application sources and tests
 	pylint -E $(shell find src tests -name *.py)
 
