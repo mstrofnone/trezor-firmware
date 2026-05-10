@@ -124,6 +124,8 @@ EMU_LOG_FILE ?= $(TESTPATH)/trezor.log
 EMU_TEST_ARGS = --disable-animation --headless --output=$(EMU_LOG_FILE) --temporary-profile
 EMU_TEST = $(EMU) $(EMU_TEST_ARGS) -c
 
+PRODTEST_EMU = $(CURDIR)/prodtest_emu.py
+
 JUNIT_XML ?= $(TESTPATH)/junit.xml
 PYTEST = pytest --junitxml=$(JUNIT_XML)
 TREZOR_FIDO2_UDP_PORT = 21326
@@ -266,7 +268,7 @@ test_emu_ui_record_multicore: ## quickly record all screens
 	../tests/update_fixtures.py local --remove-missing
 
 test_emu_prodtest: ## run prodtest device tests
-	$(PYTEST) $(TESTPATH)/prodtest_tests $(TESTOPTS)
+	$(PRODTEST_EMU) $(PYTEST) $(TESTPATH)/prodtest_tests $(TESTOPTS)
 
 pylint: ## run pylint on application sources and tests
 	pylint -E $(shell find src tests -name *.py)
