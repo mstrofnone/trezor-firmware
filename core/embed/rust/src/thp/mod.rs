@@ -18,6 +18,7 @@ use trezor_thp::{
         device::{Channel, ChannelIdAllocator, ChannelOpen, Mux},
         PacketInResult, PairingState, MAX_CREDENTIAL_LEN, PUBKEY_LEN,
     },
+    control_byte::ControlByte,
     credential::CredentialVerifier,
     error::TransportError,
     ChannelIO, Error as ThpError,
@@ -133,11 +134,18 @@ impl InterfaceContext {
                 if !self.channel_appdata.contains_key(&channel_id)
                     && !self.channel_pairing.contains_key(&channel_id)
                 {
-                    self.mux.send_unallocated_channel(channel_id)?;
                     log::debug!(
                         "[{:04x}] Received packet for unallocated channel.",
                         channel_id
                     );
+                    // Only reply to initiation packets.
+                    if packet_buffer
+                        .first()
+                        .and_then(|b| ControlByte::try_from(*b).ok())
+                        .is_some_and(|cb| !cb.is_continuation())
+                    {
+                        self.mux.send_unallocated_channel(channel_id)?;
+                    }
                     return Ok(TrezorInResult::None);
                 }
                 TrezorInResult::Route {
@@ -608,17 +616,6 @@ impl InterfaceContext {
         Ok(earliest)
     }
 
-    /// Abort ongoing handshakes because Trezor's static key is not available.
-    pub fn send_device_locked(&mut self) -> Result<(), Error> {
-        for ch in self.channel_opening.values_mut() {
-            if ch.static_key_required() {
-                ch.send_device_locked()?;
-                // Channel will be closed after the error is sent out.
-            }
-        }
-        Ok(())
-    }
-
     /// Ask the host to try again later because the receive buffer is used by
     /// another channel.
     pub fn send_transport_busy(&mut self, channel_id: u16) -> Result<(), Error> {
@@ -627,19 +624,35 @@ impl InterfaceContext {
         Ok(())
     }
 
-    /// Provide Trezor's static key for the ongoing handshake. The key is not
-    /// copied and the slice can be overwritten after the function returns.
-    pub fn handshake_static_key(&mut self, local_static_privkey: &[u8]) -> Result<(), Error> {
+    /// Abort ongoing handshakes because Trezor's static key is not available.
+    pub fn send_device_locked(&mut self) -> Result<(), Error> {
+        let mut first_err = None;
         for ch in self.channel_opening.values_mut() {
             if ch.static_key_required() {
-                ch.set_static_key(
-                    local_static_privkey
-                        .try_into()
-                        .map_err(|_| Error::ValueError(c"Invalid key length"))?,
-                )?;
+                if let Err(e) = ch.send_device_locked() {
+                    // Channel will be closed after the error is sent out.
+                    first_err.get_or_insert(e);
+                }
             }
         }
-        Ok(())
+        first_err.map_or(Ok(()), |e| Err(e.into()))
+    }
+
+    /// Provide Trezor's static key for the ongoing handshake(s). The key is not
+    /// copied and the slice can be overwritten after the function returns.
+    pub fn handshake_static_key(&mut self, local_static_privkey: &[u8]) -> Result<(), Error> {
+        let key = local_static_privkey
+            .try_into()
+            .map_err(|_| Error::ValueError(c"Invalid key length"))?;
+        let mut first_err = None;
+        for ch in self.channel_opening.values_mut() {
+            if ch.static_key_required() {
+                if let Err(e) = ch.set_static_key(key) {
+                    first_err.get_or_insert(e);
+                }
+            }
+        }
+        first_err.map_or(Ok(()), |e| Err(e.into()))
     }
 
     // Look up channel in `channel_appdata` and `channel_pairing` by its id.
