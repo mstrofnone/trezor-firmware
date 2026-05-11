@@ -75,9 +75,9 @@ class ThpContext:
 
     async def close(self) -> None:
         try:
-            close_tasks = (
+            close_tasks = [
                 loop.spawn(iface_ctx.close()) for iface_ctx in self._iface_ctxs
-            )
+            ]
             for task in close_tasks:
                 await task
         except Exception as exc:
@@ -123,6 +123,10 @@ class InterfaceContext:
         )
 
     async def close(self) -> None:
+        """
+        Shut down THP processing on this interface. Try waiting for the write loop
+        to finish in case it is sending an error to host.
+        """
         if self._handshake_key_task:
             self._handshake_key_task.close()
         self._retrans_loop.close()
