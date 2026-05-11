@@ -9,6 +9,7 @@ from trezor.messages import (
     ThpPairingCredential,
 )
 from trezor.wire.message_handler import wrap_protobuf_load
+from trezorthp import MAX_CREDENTIAL_LEN
 
 if TYPE_CHECKING:
     from buffer_types import AnyBytes
@@ -54,6 +55,12 @@ def issue_credential(
     Issue a pairing credential binded to the provided host static public key
     and credential metadata.
     """
+    # Truncate app_name and host_name to fit MAX_CREDENTIAL_LEN
+    if len(credential_metadata.app_name) + len(credential_metadata.host_name) > 80:
+        credential_metadata.host_name = credential_metadata.host_name[:40]
+    if len(credential_metadata.app_name) + len(credential_metadata.host_name) > 80:
+        credential_metadata.app_name = credential_metadata.app_name[:40]
+
     cred_auth_key = derive_cred_auth_key()
     proto_msg = ThpAuthenticatedCredentialData(
         host_static_public_key=host_static_public_key,
@@ -64,6 +71,7 @@ def issue_credential(
 
     proto_msg = ThpPairingCredential(cred_metadata=credential_metadata, mac=mac)
     credential_raw = _encode_message_into_new_buffer(proto_msg)
+    assert len(credential_raw) <= MAX_CREDENTIAL_LEN
     return credential_raw
 
 

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from trezor import protobuf, utils
 from trezor.enums import ThpPairingMethod
 from trezor.messages import ThpDeviceProperties
+from trezorthp import MAX_DEVICE_PROPERTIES_LEN
 
 from ..protocol_common import WireError
 
@@ -74,6 +75,8 @@ def _get_device_properties(iface: WireInterface) -> ThpDeviceProperties:
         | (int(utils.unit_btconly() or False) << 8)
         | ((utils.unit_packaging() or 0) << 16)
     )
+    # NOTE: if adding a variable-length field, make sure the encoded message
+    # fits MAX_DEVICE_PROPERTIES_LEN
     return ThpDeviceProperties(
         pairing_methods=get_enabled_pairing_methods(iface),
         internal_model=utils.INTERNAL_MODEL,
@@ -83,10 +86,10 @@ def _get_device_properties(iface: WireInterface) -> ThpDeviceProperties:
     )
 
 
-# NOTE: make sure the result never exceeds MAX_DEVICE_PROPERTIES_LEN in embed/rust/src/thp/mod.rs
 def get_encoded_device_properties(iface: WireInterface) -> AnyBytes:
     props = _get_device_properties(iface)
     length = protobuf.encoded_length(props)
     encoded_properties = bytearray(length)
     protobuf.encode(encoded_properties, props)
+    assert length <= MAX_DEVICE_PROPERTIES_LEN
     return encoded_properties
