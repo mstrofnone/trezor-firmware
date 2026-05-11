@@ -298,5 +298,3 @@ if not utils.BITCOIN_ONLY:
     ExtAppLoaded = 9201
     ExtAppMessage = 9202
     ExtAppResponse = 9203
-    FunnycoinGetPublicKey = 9204
-    FunnycoinPublicKey = 9205
