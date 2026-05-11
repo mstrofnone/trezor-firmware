@@ -32,10 +32,6 @@ type TrezorChannel = Channel<TrezorCrypto>;
 
 type PubKey = [u8; PUBKEY_LEN];
 
-// const MAX_DEVICE_PROPERTIES_LEN: usize = 32;
-// const MAX_CREDENTIAL_LEN: usize = 96;
-// TODO sync with micropython
-
 #[cfg(not(feature = "ble"))]
 const MAX_INTERFACES: usize = 1;
 #[cfg(feature = "ble")]

@@ -1,6 +1,8 @@
 use heapless::LinearMap;
 use spin::mutex::MutexGuard;
 
+use trezor_thp::channel::{MAX_CREDENTIAL_LEN, MAX_DEVICE_PROPERTIES_LEN};
+
 use crate::{
     error::Error,
     micropython::{
@@ -401,6 +403,12 @@ pub static mp_module_trezorthp: Module = obj_module! {
 
     /// FAILED: object
     Qstr::MP_QSTR_FAILED => FAILED_OBJ.as_obj(),
+
+    /// MAX_CREDENTIAL_LEN: int
+    Qstr::MP_QSTR_MAX_CREDENTIAL_LEN => Obj::small_int(MAX_CREDENTIAL_LEN as u16),
+
+    /// MAX_DEVICE_PROPERTIES_LEN: int
+    Qstr::MP_QSTR_MAX_DEVICE_PROPERTIES_LEN => Obj::small_int(MAX_DEVICE_PROPERTIES_LEN as u16),
 
     /// def init(iface_num: int, device_properties: AnyBytes) -> None:
     ///     """

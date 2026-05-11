@@ -6,6 +6,8 @@ ACK: object
 KEY_REQUIRED: object
 KEY_REQUIRED_UNLOCK: object
 FAILED: object
+MAX_CREDENTIAL_LEN: int
+MAX_DEVICE_PROPERTIES_LEN: int
 
 
 # rust/src/thp/micropython.rs
