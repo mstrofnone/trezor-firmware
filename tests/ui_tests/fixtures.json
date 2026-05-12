@@ -38321,6 +38321,7 @@
 "T3W1_en_thp-test_handshake.py::test_unlock_cancel": "35b1ad472cf6eeb4b3ae9562cc28964372cd02faf0b7401e7029e99ef02778b2",
 "T3W1_en_thp-test_handshake.py::test_unlock_pin": "954b12b48787f35e337b1658d66fb6ecc37002bc9af49d8513a333f9853b5589",
 "T3W1_en_thp-test_handshake.py::test_unlock_pin_wrong": "3701474166b7dd371f519010ab8c95e530f6854459c6638e8635ce4928173586",
+"T3W1_en_thp-test_multiple_hosts.py::test_concurrent_channels": "38570963b0c372cf28e31258ba6aa57c93bb502414be52fb4b577f45f1a8ad29",
 "T3W1_en_thp-test_multiple_hosts.py::test_concurrent_handshakes": "778dbcfb96e575c652b06902ef2842f6cc261dd3d457cc66b8b6c9338e82e1fb",
 "T3W1_en_thp-test_multiple_hosts.py::test_concurrent_handshakes_busy_retries": "778dbcfb96e575c652b06902ef2842f6cc261dd3d457cc66b8b6c9338e82e1fb",
 "T3W1_en_thp-test_pairing.py::test_autoconnect_credential_request_cancel": "fc60d082f39cda6492c8d2d6179fb219b904ed87260c3cba7d3d5c16c1b6b3ea",
