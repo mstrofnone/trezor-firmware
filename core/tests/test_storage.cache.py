@@ -248,7 +248,7 @@ class TestStorageCache(TestCaseWithContext):
             session_2 = cache_thp.create_or_replace_session(
                 channel.channel_id_bytes(), b"\x02"
             )
-            session_2.fields = session_2.fields = (0,) + session_2.fields[1:]
+            session_2.fields = (0,) + session_2.fields[1:]
             session_2.set_bool(KEY_BOOL, False)
             self.assertEqual(session_2.get_bool(KEY_BOOL), False)
 
