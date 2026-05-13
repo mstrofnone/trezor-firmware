@@ -5,6 +5,11 @@ inputs:
     description: 'Pass --arg fullDeps true to nix-shell?'
     required: false
     default: false
+  uv-sync:
+    description: 'Run `uv sync`?'
+    required: false
+    default: true
+    type: boolean
 runs:
   using: "composite"
   steps:
@@ -17,4 +22,5 @@ runs:
       shell: sh
     - name: Dependencies uv
       run: timeout -v --kill-after=10 200 nix-shell --arg fullDeps "${{ inputs.full-deps }}" --run "uv sync"
+      if: inputs.uv-sync
       shell: sh
