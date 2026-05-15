@@ -13,6 +13,7 @@ exclude-newer-span = "P30D"
 
 [options.exclude-newer-package]
 urllib3 = "2026-05-07T16:13:17.152Z"
+cryptography = "2026-05-04T22:59:29.62Z"
 
 [[package]]
 name = "astroid"
