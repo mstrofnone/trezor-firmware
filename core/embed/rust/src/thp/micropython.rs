@@ -1,6 +1,3 @@
-use heapless::LinearMap;
-use spin::mutex::MutexGuard;
-
 use trezor_thp::channel::{MAX_CREDENTIAL_LEN, MAX_DEVICE_PROPERTIES_LEN};
 
 use crate::{
@@ -19,39 +16,18 @@ use crate::{
     },
 };
 
-use super::{
-    InterfaceContext, TrezorInResult, CANNOT_UNLOCK, MAX_INTERFACES, THP_AUX, THP_INTERFACES,
-};
-
-fn get_iface<'a>(
-    mg: &'a mut Option<MutexGuard<'static, LinearMap<u8, InterfaceContext, MAX_INTERFACES>>>,
-    iface_num: u8,
-) -> Result<&'a mut InterfaceContext, Error> {
-    let interfaces = mg.as_mut().ok_or(CANNOT_UNLOCK)?;
-    interfaces.get_mut(&iface_num).ok_or(Error::OutOfRange)
-}
+use super::{TrezorInResult, CANNOT_UNLOCK, THP_AUX, THP_CONTEXT};
 
 extern "C" fn thp_init(iface_num: Obj, device_properties: Obj) -> Obj {
     let block = || {
         let iface_num: u8 = iface_num.try_into()?;
         let device_properties = unsafe { get_buffer(device_properties)? };
 
-        let mut interfaces = THP_INTERFACES.try_lock().ok_or(CANNOT_UNLOCK)?;
-        if let Some(ifctx) = interfaces.get(&iface_num) {
-            if log::log_enabled!(log::Level::Error) && ifctx.message_out_ready().is_some() {
-                log::error!("Message ready from previous session but buffer is lost, waiting for retransmission.");
-            }
-            // Already initialized.
-            return Ok(Obj::const_none());
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.add_interface(iface_num, device_properties)?;
+        if log::log_enabled!(log::Level::Error) && thp.message_out_ready(iface_num).is_some() {
+            log::error!("Message ready from previous session but buffer is lost, waiting for retransmission.");
         }
-
-        let res = interfaces.insert(
-            iface_num,
-            InterfaceContext::new(iface_num, device_properties)?,
-        );
-        let res = unwrap!(res); // capacity check
-        assert!(res.is_none()); // unique id check
-
         Ok(Obj::const_none())
     };
 
@@ -63,13 +39,8 @@ extern "C" fn thp_packet_in(iface_num: Obj, buffer_view: Obj, credential_fn: Obj
         let iface_num: u8 = iface_num.try_into()?;
         let buffer = unsafe { get_buffer(buffer_view)? };
 
-        let mut interfaces = THP_INTERFACES.try_lock().ok_or(CANNOT_UNLOCK)?;
-        let ifctx = interfaces.get_mut(&iface_num).ok_or(Error::OutOfRange)?;
-        let res = ifctx.packet_in(buffer, credential_fn)?;
-
-        if matches!(res, TrezorInResult::ChannelAllocation) {
-            InterfaceContext::packet_in_alloc(&mut interfaces, iface_num)?;
-        }
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let res = thp.packet_in(iface_num, buffer, credential_fn)?;
         res.try_into()
     };
 
@@ -87,10 +58,8 @@ extern "C" fn thp_packet_in_channel(n_args: usize, args: *const Obj) -> Obj {
         let packet_buffer = unsafe { get_buffer(args[2])? };
         let receive_buffer = unsafe { get_buffer_mut(args[3])? };
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        let res = ifctx.packet_in_channel(channel_id, packet_buffer, receive_buffer)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let res = thp.packet_in_channel(iface_num, channel_id, packet_buffer, receive_buffer)?;
         res.try_into()
     };
 
@@ -108,11 +77,10 @@ extern "C" fn thp_packet_out(n_args: usize, args: *const Obj) -> Obj {
         let send_buffer = unsafe { get_buffer(args[2])? };
         let packet_buffer = unsafe { get_buffer_mut(args[3])? };
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
         let written = match channel_id {
-            Some(cid) => ifctx.packet_out_channel(cid, send_buffer, packet_buffer)?,
-            None => ifctx.packet_out(packet_buffer)?,
+            Some(cid) => thp.packet_out_channel(iface_num, cid, send_buffer, packet_buffer)?,
+            None => thp.packet_out(iface_num, packet_buffer)?,
         };
         Ok(written.into())
     };
@@ -126,10 +94,9 @@ extern "C" fn thp_message_out(iface_num: Obj, channel_id: Obj, receive_buffer: O
         let channel_id: u16 = channel_id.try_into()?;
         let receive_buffer = unsafe { get_buffer_mut(receive_buffer)? };
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        let (sid, message_type, message_bytes) = ifctx.message_out(channel_id, receive_buffer)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let (sid, message_type, message_bytes) =
+            thp.message_out(iface_num, channel_id, receive_buffer)?;
         (
             sid.into(),
             message_type.into(),
@@ -151,9 +118,8 @@ extern "C" fn thp_message_in(n_args: usize, args: *const Obj) -> Obj {
         let plaintext_len: usize = args[2].try_into()?;
         let send_buffer = unsafe { get_buffer_mut(args[3])? };
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-        ifctx.message_in(channel_id, plaintext_len, send_buffer)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.message_in(iface_num, channel_id, plaintext_len, send_buffer)?;
         Ok(Obj::const_none())
     };
 
@@ -165,10 +131,8 @@ extern "C" fn thp_message_retransmit(iface_num: Obj, channel_id: Obj) -> Obj {
         let iface_num: u8 = iface_num.try_into()?;
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        let channel_ok = ifctx.message_retransmit(channel_id)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let channel_ok = thp.message_retransmit(iface_num, channel_id)?;
         Ok(channel_ok.into())
     };
 
@@ -180,10 +144,8 @@ extern "C" fn thp_send_transport_busy(iface_num: Obj, channel_id: Obj) -> Obj {
         let iface_num: u8 = iface_num.try_into()?;
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        ifctx.send_transport_busy(channel_id)?;
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.send_transport_busy(iface_num, channel_id)?;
         Ok(Obj::const_none())
     };
 
@@ -195,16 +157,15 @@ extern "C" fn thp_channel_info(iface_num: Obj, channel_id: Obj) -> Obj {
         let iface_num: u8 = iface_num.try_into()?;
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
+        let thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
 
-        let (last_write_age_ms, pairing_state) = ifctx.channel_info(channel_id)?;
-        let hash = ifctx.handshake_hash(channel_id)?;
-        let remote_static_pubkey = ifctx.remote_static_pubkey(channel_id)?;
+        let (last_write_age_ms, pairing_state) = thp.channel_info(iface_num, channel_id)?;
+        let hash = thp.handshake_hash(iface_num, channel_id)?;
+        let remote_static_pubkey = thp.remote_static_pubkey(iface_num, channel_id)?;
 
         let credential = {
             let aux = THP_AUX.try_lock().ok_or(CANNOT_UNLOCK)?;
-            aux.get_credential(channel_id).try_into()?
+            aux.get_credential(iface_num, channel_id).try_into()?
         };
 
         attr_tuple! {
@@ -224,11 +185,8 @@ extern "C" fn thp_channel_paired(iface_num: Obj, channel_id: Obj) -> Obj {
         let iface_num: u8 = iface_num.try_into()?;
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        let replaced_channel_id = ifctx.channel_paired(channel_id)?;
-
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let replaced_channel_id = thp.channel_paired(iface_num, channel_id)?;
         replaced_channel_id.try_into()
     };
 
@@ -240,9 +198,8 @@ extern "C" fn thp_channel_close(iface_num: Obj, channel_id: Obj) -> Obj {
         let iface_num: u8 = iface_num.try_into()?;
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-        ifctx.channel_close(channel_id);
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.channel_close(iface_num, channel_id);
         Ok(Obj::const_none())
     };
 
@@ -253,10 +210,8 @@ extern "C" fn thp_channel_close_all(exclude_channel_id: Obj) -> Obj {
     let block = || {
         let exclude_channel_id: Option<u16> = exclude_channel_id.try_into_option()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock().ok_or(CANNOT_UNLOCK)?;
-        for ifctx in interfaces.values_mut() {
-            ifctx.channel_close_all(exclude_channel_id);
-        }
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.channel_close_all(exclude_channel_id);
         Ok(Obj::const_none())
     };
 
@@ -267,11 +222,8 @@ extern "C" fn thp_channel_update_last_usage(channel_id: Obj) -> Obj {
     let block = || {
         let channel_id: u16 = channel_id.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock().ok_or(CANNOT_UNLOCK)?;
-        for ifctx in interfaces.values_mut() {
-            ifctx.channel_update_last_usage(channel_id);
-        }
-
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        thp.channel_update_last_usage(channel_id);
         Ok(Obj::const_none())
     };
 
@@ -281,10 +233,9 @@ extern "C" fn thp_channel_update_last_usage(channel_id: Obj) -> Obj {
 extern "C" fn thp_channel_get_closed(iface_num: Obj) -> Obj {
     let block = || {
         let iface_num: u8 = iface_num.try_into()?;
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
 
-        let closed = ifctx.channel_get_closed();
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        let closed = thp.channel_get_closed(iface_num);
         if closed.is_empty() {
             return Ok(Obj::const_none());
         }
@@ -299,10 +250,8 @@ extern "C" fn thp_next_timeout(iface_num: Obj) -> Obj {
     let block = || {
         let iface_num: u8 = iface_num.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
-        match ifctx.next_timeout()? {
+        let thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
+        match thp.next_timeout(iface_num)? {
             None => Ok(Obj::const_none()),
             Some((channel_id, timeout_ms)) => {
                 (channel_id.into(), timeout_ms.try_into()?).try_into()
@@ -317,14 +266,12 @@ extern "C" fn thp_handshake_key(iface_num: Obj, local_static_privkey: Obj) -> Ob
     let block = || {
         let iface_num: u8 = iface_num.try_into()?;
 
-        let mut interfaces = THP_INTERFACES.try_lock();
-        let ifctx = get_iface(&mut interfaces, iface_num)?;
-
+        let mut thp = THP_CONTEXT.try_lock().ok_or(CANNOT_UNLOCK)?;
         if local_static_privkey == Obj::const_none() {
-            ifctx.send_device_locked()?;
+            thp.send_device_locked(iface_num)?;
         } else {
             let key = unsafe { get_buffer(local_static_privkey)? };
-            ifctx.handshake_static_key(key)?;
+            thp.handshake_static_key(iface_num, key)?;
         }
         Ok(Obj::const_none())
     };
@@ -375,8 +322,6 @@ impl TryFrom<TrezorInResult> for Obj {
             TrezorInResult::MessageReady => MESSAGE_READY_OBJ.as_obj(),
             TrezorInResult::MessageReadyAck => MESSAGE_READY_ACK_OBJ.as_obj(),
             TrezorInResult::Ack => ACK_OBJ.as_obj(),
-            // Currently no need to expose to python.
-            TrezorInResult::ChannelAllocation => Obj::const_none(),
         })
     }
 }
