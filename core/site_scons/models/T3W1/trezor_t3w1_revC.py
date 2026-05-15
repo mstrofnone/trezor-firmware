@@ -177,6 +177,7 @@ def configure(
         defines += [("USE_SMP", "1")]
 
     if "nfc" in features_wanted:
+        sources += ["embed/io/nfc/st25/nfc_poll.c"]
         sources += ["embed/io/nfc/st25/nfc.c"]
         sources += ["embed/io/nfc/st25/ndef.c"]
         sources += ["embed/io/nfc/st25/card_emulation.c"]
