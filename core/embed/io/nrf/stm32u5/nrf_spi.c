@@ -127,6 +127,11 @@ void nrf_spi_init(nrf_driver_t *drv) {
 }
 
 void nrf_spi_deinit(void) {
+  nrf_driver_t *drv = &g_nrf_driver;
+
+  HAL_DMA_DeInit(&drv->spi_rx_dma);
+  HAL_DMA_DeInit(&drv->spi_tx_dma);
+
   NRF_SPI_FORCE_RESET();
   NRF_SPI_RELEASE_RESET();
 
@@ -134,6 +139,8 @@ void nrf_spi_deinit(void) {
   HAL_GPIO_DeInit(NRF_SPI_NSS_PORT, NRF_SPI_NSS_PIN);
   HAL_GPIO_DeInit(NRF_SPI_MISO_PORT, NRF_SPI_MISO_PIN);
   HAL_GPIO_DeInit(NRF_SPI_MOSI_PORT, NRF_SPI_MOSI_PIN);
+
+  NRF_SPI_CLK_DIS();
 }
 
 int32_t nrf_send_msg(nrf_service_id_t service, const uint8_t *data,

@@ -81,6 +81,7 @@ void nrf_uart_deinit(void) {
   HAL_GPIO_DeInit(NRF_UART_RX_PORT, NRF_UART_RX_PIN);
   HAL_GPIO_DeInit(NRF_UART_RTS_PORT, NRF_UART_RTS_PIN);
   HAL_GPIO_DeInit(NRF_UART_CTS_PORT, NRF_UART_CTS_PIN);
+  NRF_UART_CLK_DIS();
 }
 
 void nrf_uart_send(uint8_t data) {
