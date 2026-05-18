@@ -523,6 +523,17 @@ class Channel:
 
         while True:
             message = thp_io.read(self.transport, timeout)
+
+            if message.cid != self.channel_id and (
+                not allow_broadcast or message.cid != BROADCAST_CHANNEL_ID
+            ):
+                LOG.warning(
+                    "Received message with unexpected channel_id=%04x, expected=%04x",
+                    message.cid,
+                    self.channel_id,
+                )
+                continue
+
             if message.seq_bit is not None:
                 if message.seq_bit != self.sync_bit_receive:
                     LOG.warning(
@@ -534,16 +545,6 @@ class Channel:
                     continue
 
                 self.sync_bit_receive = not self.sync_bit_receive
-
-            if message.cid != self.channel_id and (
-                not allow_broadcast or message.cid != BROADCAST_CHANNEL_ID
-            ):
-                LOG.warning(
-                    "Received message with unexpected channel_id=%04x, expected=%04x",
-                    message.cid,
-                    self.channel_id,
-                )
-                continue
 
             if control_byte.is_error(message.ctrl_byte):
                 code = message.data[0]
