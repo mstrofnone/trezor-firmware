@@ -78,7 +78,7 @@ def test_concurrent_handshakes_busy_retries(client: Client) -> None:
 
 
 def test_concurrent_channels(test_ctx: TrezorTestContext) -> None:
-    MAX = 8
+    MAX = 10
     channels = []
 
     # Open MAX+1 channels
@@ -87,19 +87,18 @@ def test_concurrent_channels(test_ctx: TrezorTestContext) -> None:
         pairing.skip()
         pairing.finish()
         channels.append(pairing.client.channel)
-    client = pairing.client
 
     # Oldest channel gets evicted
     with pytest.raises(ThpError) as err:
-        client.channel = channels[0]
-        client.ping("will raise")
+        test_ctx.channel = channels[0]
+        test_ctx.ping("will raise")
     assert err.value.code == ThpErrorCode.UNALLOCATED_CHANNEL
 
     # Others keep working
     for channel in channels[1:]:
-        client.channel = channel
-        client.ping("hi")
+        test_ctx.channel = channel
+        test_ctx.ping("hi")
 
     for channel in channels[1:]:
-        client.channel = channel
-        client.ping("hi2")
+        test_ctx.channel = channel
+        test_ctx.ping("hi2")

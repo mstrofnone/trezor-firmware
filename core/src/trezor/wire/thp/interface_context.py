@@ -74,15 +74,13 @@ class ThpContext:
             self.active_channel.kill(ChannelPreemptedException())
 
     async def close(self) -> None:
-        try:
-            close_tasks = [
-                loop.spawn(iface_ctx.close()) for iface_ctx in self._iface_ctxs
-            ]
-            for task in close_tasks:
+        close_tasks = [loop.spawn(iface_ctx.close()) for iface_ctx in self._iface_ctxs]
+        for task in close_tasks:
+            try:
                 await task
-        except Exception as exc:
-            if __debug__:
-                log.exception(__name__, exc)
+            except Exception as exc:
+                if __debug__:
+                    log.exception(__name__, exc)
 
 
 class InterfaceContext:
@@ -115,7 +113,7 @@ class InterfaceContext:
         self._tx_packet_buf = bytearray(iface.TX_PACKET_LEN)
 
         # IDs hannels that would like to become active but will get error instead.
-        self.inactive_channels: list[int] = []
+        self.inactive_channels: set[int] = set()
 
         trezorthp.init(
             iface.iface_num(),
@@ -212,8 +210,10 @@ class InterfaceContext:
         expecting_ack = False
         for ifctx in self.thp_ctx._iface_ctxs:
             if ifctx.active_channel:
-                expecting_message |= ifctx.active_channel.expecting_message
-                expecting_ack |= ifctx.active_channel.expecting_ack
+                expecting_message = (
+                    expecting_message or ifctx.active_channel.expecting_message
+                )
+                expecting_ack = expecting_message or ifctx.active_channel.expecting_ack
         if __debug__ and _TRACE:
             log.debug(
                 __name__,
@@ -237,7 +237,7 @@ class InterfaceContext:
 
         if self.active_channel is None or self.active_channel.channel_id != channel_id:
             trezorthp.send_transport_busy(self._iface.iface_num(), channel_id)
-            self.inactive_channels.append(channel_id)
+            self.inactive_channels.add(channel_id)
             self.request_write()
             self.thp_ctx.preempt_active_channel_if_stale()
             return
