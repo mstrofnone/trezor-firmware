@@ -1,6 +1,8 @@
 #[cfg(feature = "test")]
 use std::ffi::OsStr;
-use std::{env, path::PathBuf, process::Command};
+use std::{env, fs, path::PathBuf, process::Command};
+
+use bindgen::EnumVariation;
 
 fn main() {
     println!("cargo:rustc-env=BUILD_DIR={}", build_dir());
@@ -11,6 +13,7 @@ fn main() {
     generate_trezorhal_bindings();
     #[cfg(feature = "crypto")]
     generate_crypto_bindings();
+    generate_api_bindings();
     #[cfg(feature = "test")]
     link_core_objects();
 }
@@ -587,6 +590,44 @@ fn generate_crypto_bindings() {
         .expect("Unable to generate bindings")
         .write_to_file(PathBuf::from(out_path).join("crypto.rs"))
         .unwrap();
+}
+
+fn generate_api_bindings() {
+    let out_path = env::var("OUT_DIR").unwrap();
+    let out_file = PathBuf::from(&out_path).join("api.rs");
+
+    let api_header_path = "../api/trezor_api.h";
+
+    println!("cargo:rerun-if-changed={}", api_header_path);
+    println!("cargo:rerun-if-env-changed=TREZOR_API_RS_OUT");
+
+    prepare_bindings()
+        .header(api_header_path)
+        .use_core()
+        .no_debug(".*")
+        .no_copy(".*")
+        .derive_default(true)
+        .default_enum_style(EnumVariation::Rust {
+            non_exhaustive: false,
+        })
+        .raw_line("#![allow(non_snake_case)]")
+        .raw_line("#![allow(non_camel_case_types)]")
+        .raw_line("#![allow(non_upper_case_globals)]")
+        .raw_line("#![allow(dead_code)]")
+        .allowlist_type("trezor_api_v1_t")
+        .allowlist_type("trezor_api_getter_t")
+        .allowlist_type("sysevents_t")
+        .allowlist_type("syshandle_mask_t")
+        .allowlist_var("SYSHANDLE__IPC0")
+        .generate()
+        .expect("Unable to generate bindings")
+        .write_to_file(&out_file)
+        .expect("Unable to write bindings to file");
+
+    // Export for cross-target ABI check
+    if let Ok(dst) = env::var("TREZOR_API_RS_OUT") {
+        fs::copy(&out_file, &dst).unwrap_or_else(|e| panic!("failed to copy api.rs to {dst}: {e}"));
+    }
 }
 
 fn is_firmware() -> bool {
