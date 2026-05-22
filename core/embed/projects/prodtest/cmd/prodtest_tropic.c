@@ -1631,11 +1631,10 @@ static bool find_pairing_key(cli_t* cli, lt_pkey_index_t* pairing_key_index) {
       return true;
     }
     if (res != LT_L2_HSK_ERR) {
-      cli_error(
+      cli_trace(
           cli, CLI_ERROR,
           "`tropic_custom_session_start()` for key %d failed with error '%s'",
           i, lt_ret_verbose(res));
-      return false;
     }
   }
 
