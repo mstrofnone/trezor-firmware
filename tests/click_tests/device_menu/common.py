@@ -213,6 +213,7 @@ class Menu(Enum):
                     [
                         TR.words__name,
                         TR.brightness__title,
+                        TR.words__tap_to_wake,
                     ]
                 )
                 if features.tap_to_wake is not None:
