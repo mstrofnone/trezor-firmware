@@ -34,8 +34,8 @@
 
 static nfc_dev_info_t dev_info = {0};
 
-static const uint8_t aid_select_ndef_app[7] = {0xd2, 0x76, 0x00, 0x00,
-                                               0x85, 0x01, 0x01};
+// static const uint8_t aid_select_ndef_app[7] = {0xd2, 0x76, 0x00, 0x00,
+//                                                0x85, 0x01, 0x01};
 // static const uint8_t aid_select_cc_file[7] = {0x00, 0xa4, 0x00, 0x0c,
 //                                               0x02, 0xe1, 0x03};
 // static const uint8_t aid_read_cc_file[5] = {0x00, 0xb0, 0x00, 0x00, 0x00};
@@ -147,7 +147,7 @@ static void prodtest_nfc_read_card(cli_t* cli) {
           break;
         case NFC_DEV_INTERFACE_NFCDEP:
           cli_trace(cli, "NFC Tag Type: NFC-DEP (%d)", dev_info.interface);
-        break;
+          break;
         default:
           cli_error(cli, CLI_ERROR_ABORT, "NFC Unexpected Tag Type (%d)",
                     dev_info.interface);
@@ -198,7 +198,7 @@ static void prodtest_nfc_emulate_card(cli_t* cli) {
   }
 
   nfc_register_tech(NFC_CARD_EMU_TECH_A);
-  nfc_activate_stm();
+  nfc_start_discovery();
 
   uint32_t expire_time = ticks_timeout(timeout);
   nfc_event_t nfc_event;
@@ -276,7 +276,7 @@ static void prodtest_nfc_write_card(cli_t* cli) {
       goto cleanup;
     }
 
-    if (nfc_event == NFC_DEVICE_CONNECTED) {
+    if (nfc_event == NFC_EVENT_CONNECTED) {
       nfc_dev_read_info(&dev_info);
 
       if (dev_info.type != NFC_DEV_TYPE_A) {
@@ -286,15 +286,6 @@ static void prodtest_nfc_write_card(cli_t* cli) {
 
       cli_trace(cli, "Writing URI to NFC tag %s", dev_info.uid);
       nfc_dev_write_ndef_uri();
-
-      if (timeout_set) {
-        nfc_dev_deactivate();
-        cli_trace(cli, "NFC reader mode over");
-        break;
-      }
-
-      systick_delay_ms(100);
-      nfc_dev_deactivate();
     }
 
     if (cli_aborted(cli)) {
@@ -309,7 +300,6 @@ static void prodtest_nfc_write_card(cli_t* cli) {
 cleanup:
   nfc_deinit();
 }
-
 
 // clang-format off
 
@@ -331,13 +321,6 @@ PRODTEST_CLI_CMD(
   .name = "nfc-write-card",
   .func = prodtest_nfc_write_card,
   .info = "Activate NFC in reader mode and write a URI to the attached card",
-  .args = "[<timeout>]"
-);
-
-PRODTEST_CLI_CMD(
-  .name = "nfc-send_apdu",
-  .func = prodtest_nfc_send_apdu_cmd,
-  .info = "Send testing APDU commands over NFC to discovered device",
   .args = "[<timeout>]"
 );
 

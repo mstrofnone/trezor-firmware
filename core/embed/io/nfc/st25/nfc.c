@@ -34,6 +34,7 @@
 #include "rfal_isoDep.h"
 #include "rfal_nfc.h"
 #include "rfal_nfca.h"
+// #include "rfal_nfcv.h"
 #include "rfal_platform.h"
 #include "rfal_rf.h"
 #include "rfal_t2t.h"
