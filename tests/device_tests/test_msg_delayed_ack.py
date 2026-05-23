@@ -14,11 +14,13 @@
 
 import time
 
+import pytest
+
 from trezorlib import messages
 from trezorlib.debuglink import DebugSession as Session
 
 
-def test_delayed_ack(session: Session):
+def ping_without_ack(session: Session):
     br = session.call_raw(messages.Ping(message="delayed", button_protection=True))
     assert isinstance(br, messages.ButtonRequest)
     assert br.code == messages.ButtonRequestType.ProtectCall
@@ -27,5 +29,22 @@ def test_delayed_ack(session: Session):
     # "waiting" screen should be shown after 2 seconds on Core models
     # (following https://github.com/trezor/trezor-firmware/issues/5884)
     time.sleep(2.5)
+
+
+def test_delayed_ack(session: Session):
+    ping_without_ack(session)
+
     res = session.call_raw(messages.ButtonAck())
+    res = messages.Success.ensure_isinstance(res)
     assert res.message == "delayed"
+
+
+@pytest.mark.models("core")
+def test_abort(session: Session):
+    ping_without_ack(session)
+
+    session.debug.press_yes()
+    assert session.read() == messages.Failure(
+        code=messages.FailureType.ActionCancelled, message="Cancelled"
+    )
+    assert session.client.ping("again") == "again"
