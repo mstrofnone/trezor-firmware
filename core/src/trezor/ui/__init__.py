@@ -331,8 +331,7 @@ class Layout(Generic[T]):
             return False
 
         br = ButtonRequest(code=msg[0], name=msg[1], pages=self.layout.page_count())
-        self.button_request_handler.put(br)
-        return True
+        return self.button_request_handler.put(br)
 
     def _paint(self) -> None:
         """Paint the layout and ensure that homescreen cache is properly invalidated."""

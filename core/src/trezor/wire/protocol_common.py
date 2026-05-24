@@ -188,7 +188,7 @@ class ButtonRequestHandler:
             # Used for detecting missing ButtonAck in debug builds.
             self.pending = False
 
-    def put(self, br: ButtonRequest) -> None:
+    def put(self, br: ButtonRequest) -> bool:
         if __debug__:
             if self.pending:
                 from . import FirmwareError
@@ -201,6 +201,7 @@ class ButtonRequestHandler:
 
         # in production, we don't want this to fail, hence replace=True
         self.box.put(br, replace=True)
+        return True
 
     async def br_task(self, ack_callback: AckCallback) -> None:
         assert self.is_done.is_empty()
@@ -254,14 +255,14 @@ class ContinueOnErrors(ButtonRequestHandler):
         self.msg = msg
         self.ignore = False
 
-    def put(self, br: ButtonRequest) -> None:
+    def put(self, br: ButtonRequest) -> bool:
         if self.ignore:
             # Stop handling ButtonRequests in case of unexpected error.
             if __debug__:
                 log.debug(__name__, "ButtonRequest: skipped %s (%s)", br.code, br.name)
-            return
+            return False
 
-        super().put(br)
+        return super().put(br)
 
     async def join(self) -> None:
         if self.ignore:
