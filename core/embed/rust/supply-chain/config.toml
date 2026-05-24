@@ -139,10 +139,6 @@ criteria = "safe-to-deploy"
 version = "0.3.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.ufmt-write]]
-version = "0.1.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.unsize]]
 version = "1.1.0"
 criteria = "safe-to-deploy"

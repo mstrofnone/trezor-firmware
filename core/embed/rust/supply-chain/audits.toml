@@ -1,4 +1,89 @@
 
 # cargo-vet audits file
 
-[audits]
+[criteria.skimmed]
+description = """
+The crate has been partially reviewed — some `unsafe` blocks and/or some
+logic, but not exhaustively. A best-effort low-risk check; not a substitute
+for `safe-to-deploy` on security-critical crates.
+"""
+
+[criteria.unsafe-reviewed]
+description = """
+The crate's `unsafe` code has been reviewed and is sound. Safe-code logic
+has NOT been audited; appropriate only for crates where a logic bug cannot
+subvert security (e.g., cannot leak secrets, produce wrong cryptographic
+output, or generate wrong wallet addresses).
+"""
+implies = "skimmed"
+
+[[audits.byteorder]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "skimmed"
+version = "1.4.3"
+
+[[audits.cty]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "safe-to-deploy"
+version = "0.2.2"
+
+[[audits.either]]
+who = "Martin Milata <martin@martinmilata.cz>"
+criteria = "unsafe-reviewed"
+version = "1.15.0"
+
+[[audits.hash32]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "skimmed"
+version = "0.3.1"
+
+[[audits.hex]]
+who = "Martin Milata <martin@martinmilata.cz>"
+criteria = "skimmed"
+version = "0.4.3"
+
+[[audits.itertools]]
+who = "Martin Milata <martin@martinmilata.cz>"
+criteria = "unsafe-reviewed"
+version = "0.13.0"
+
+[[audits.num-traits]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "unsafe-reviewed"
+version = "0.2.18"
+notes = "Reviewed at 0.2.18; the delta to 0.2.19 (current lock) has not been re-reviewed."
+
+[[audits.proc-macro2]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "unsafe-reviewed"
+version = "1.0.81"
+
+[[audits.stable_deref_trait]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "safe-to-deploy"
+version = "1.2.0"
+
+[[audits.syn]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "unsafe-reviewed"
+version = "1.0.109"
+
+[[audits.ufmt-macros]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "unsafe-reviewed"
+version = "0.3.0"
+
+[[audits.ufmt-write]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+
+[[audits.unicode-ident]]
+who = "matejcik <ja@matejcik.cz>"
+criteria = "skimmed"
+version = "1.0.12"
+
+[[audits.zeroize]]
+who = ["matejcik <ja@matejcik.cz>", "Martin Milata <martin@martinmilata.cz>"]
+criteria = "safe-to-deploy"
+version = "1.8.2"
