@@ -45,7 +45,7 @@ jobs:
         -k 'not test_authenticate_device'
         --durations=50
         --session-timeout 19800
-      TT_UHUB_PORT: 1
+      TT_UHUB_PORT: all
       QUIET_MODE: 1
     timeout-minutes: 360  # 6h CI job timeout
     steps:
@@ -88,7 +88,7 @@ jobs:
       PYOPT: 0
       DISABLE_OPTIGA: 1
       BOOTLOADER_DEVEL: ${{ matrix.model == 'T2T1' && '0' || '1' }}
-      TT_UHUB_PORT: 1
+      TT_UHUB_PORT: all
       QUIET_MODE: 1
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # actions/checkout@v6.0.2
