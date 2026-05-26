@@ -86,8 +86,8 @@ anyhow = "1.0"
 bindgen = { version = "0.72.1", default-features = false, features = ["runtime"] }
 cargo_metadata = "0.23.1"
 cc = "1.0.69"
-clap = "4.6.0"
-color-eyre = "0.6.5"
+clap = { version = "4.6.0", default-features = false }
+color-eyre = { version = "0.6.5", default-features = false, features = ["track-caller"] }
 glob = "0.3.0"
 globset = "0.4.18"
 hex = "0.4.3"
@@ -98,5 +98,6 @@ rand = { version = "0.10.1", default-features = false }
 serde_json = "1.0.145"
 tempfile = "3.25.0"
 zlib-rs = "0.6.3"
+cargo_metadata = "0.23.1"
 
 xbuild = { path = "xbuild" }
