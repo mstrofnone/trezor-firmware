@@ -278,12 +278,6 @@ int main(void) {
                               &FIRMWARE_AREA),
          "invalid firmware hash");
 
-  // do not check any trust flags on header, proceed
-
-#ifdef USE_SECRET
-  secret_prepare_fw(sectrue, sectrue);
-#endif
-
   size_t secmon_code_offset = 0;
 
 #ifdef USE_SECMON_VERIFICATION
@@ -309,6 +303,11 @@ int main(void) {
                                &FIRMWARE_AREA),
          "Secmon is corrupted");
 
+#endif
+
+  // do not check any trust flags on header, proceed
+#ifdef USE_SECRET
+  secret_prepare_fw(sectrue, sectrue);
 #endif
 
   drivers_deinit();
