@@ -126,17 +126,6 @@ def test_toggle_haptic(device_handler: "BackgroundDeviceHandler"):
 
 
 @pytest.mark.setup_client(pin=None)
-def test_tap_to_wake_default(device_handler: "BackgroundDeviceHandler"):
-    features = device_handler.features()
-
-    if features.tap_to_wake is None:
-        pytest.skip("tap to wake not supported")
-
-    assert features.initialized is True
-    assert features.tap_to_wake is True
-
-
-@pytest.mark.setup_client(pin=None)
 def test_toggle_tap_to_wake(device_handler: "BackgroundDeviceHandler"):
     debug = device_handler.debuglink()
     features = device_handler.features()
@@ -146,6 +135,8 @@ def test_toggle_tap_to_wake(device_handler: "BackgroundDeviceHandler"):
 
     assert features.initialized is True
     assert features.pin_protection is False
+    # Default must be enabled on a fresh device
+    assert features.tap_to_wake is True
 
     tap_to_wake_original = features.tap_to_wake
 
