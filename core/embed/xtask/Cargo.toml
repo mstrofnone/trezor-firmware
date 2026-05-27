@@ -11,5 +11,4 @@ serde_json.workspace = true
 owo-colors.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
-tempfile = { version = "3", default-features = false }
+tempfile = { workspace=true, version = "3", default-features = false }
