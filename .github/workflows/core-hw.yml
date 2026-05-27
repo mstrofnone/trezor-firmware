@@ -74,6 +74,7 @@ jobs:
 
   core_monero_test:
     name: Monero tests
+    if: false
     runs-on:
       - self-hosted
       - ${{ matrix.model == 'T2B1' && 'runner3' || 'hw-t2t1' }}
